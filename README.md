@@ -1,2 +1,4 @@
-# Telegram-bot-for-business-gamification
-Telegram bot for business gamification
+# Телеграм бот
+### Для геймификации своего бизнеса
+Еще в дороботке
+
