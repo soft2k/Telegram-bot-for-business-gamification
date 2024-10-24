@@ -237,13 +237,13 @@ async def confirm_task(message: types.Message, state: FSMContext):
 
 @router_root.message(F.text == 'Подтвердить все')
 async def confrim_task(message: types.Message, state: FSMContext):
-    await rq.confirm_all()
-    await message.reply('Все задачи потверждены')
+    await rq.confirm_all(message, state)
+    await message.reply('Все задачи подтверждены')
 
 @router_root.message(F.text == 'Удалить все')
 async def delete_all(message: types.Message, state: FSMContext):
     await rq.deleat_all_confrim()
-    await message.reply('Все задачи удалены')
+    await message.reply('Все задачи удалены')   
 
 @router_root.message(F.text == 'Потвердить одно')
 async def confrim_task(message: types.Message, state: FSMContext):
