@@ -43,11 +43,27 @@ async def check_root_id(tg_id):
         else:
             return False
 
+def calculate_level(points):
+    levels = {
+        0: 1,
+        5: 2,
+        15: 3,
+        30: 4,
+        50: 5,
+        
+    }
+    level = 1
+    for p, lvl in levels.items():
+        if points >= p:
+            level = lvl
+    return level
+
 async def profile(tg_id):
     async with async_session() as session:
         user_id = await session.scalar(select(User).where(User.tg_id == tg_id))
 
         if user_id:
+            user_id.level = calculate_level(user_id.point)
             return{
                 'name': user_id.name,
                 'tg_id': user_id.tg_id,
@@ -59,24 +75,34 @@ async def profile(tg_id):
         else:
             return None
         
-async def confirm_all():
+async def confirm_all(message: types.Message, state: FSMContext):
+    bot: Bot = message.bot
     async with async_session() as session:
-      
         result = await session.execute(select(Confirm))
         confirm_records = result.scalars().all()
-
+    
         for confirm in confirm_records:
             user = await session.execute(select(User).where(User.tg_id == confirm.tg_id))
             user = user.scalar_one_or_none()
             if user:
+                user.all_point += confirm.points
                 user.point += confirm.points
                 user.all_task += 1
-            
-        # Очищаем таблицу Confirm
-        await session.execute(text("DELETE FROM confrim"))
-        
+                
+                # Отправка уведомления пользователю
+                
+                try:
+                            await bot.send_message(
+                                chat_id=user.tg_id,
+                                text=f"Ваше задание было подтверждено! Вы получили {confirm.points} очков."
+                            )
+                except Exception as e:
+                     await message.reply(f"Подтверждение обработано, но возникла ошибка при отправке уведомления пользователю: {e}")
 
+        await session.execute(text("DELETE FROM confrim"))
         await session.commit()
+    
+    await message.answer("Все подтверждения обработаны и уведомления отправлены.")
 
 async def deleat_all_confrim():
     async with async_session() as session:
@@ -99,11 +125,10 @@ async def confrim_one(message: types.Message, state: FSMContext):
                     
                     if user:
                         user.point += confirm.points
-                        user.all_task += 1
+                        user.all_task += 1 
                         
                         await session.delete(confirm)
                         
-                        # Отправляем уведомление пользователю
                         try:
                             await bot.send_message(
                                 chat_id=user.tg_id,
@@ -135,6 +160,9 @@ async def confrim_delete_one(message:  types.Message, state: FSMContext):
                 await message.reply(f'Потверждение с таким ID: {confirm_query} не найден')
     except ValueError:
         await message.reply('Введите коректный ID')
+
+
+
     
 
 
