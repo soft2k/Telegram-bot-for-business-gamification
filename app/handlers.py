@@ -83,6 +83,7 @@ async def get_tasks():
 @router.message(F.text == 'Ежедневные задание')
 async def show_tasks(message: types.Message):
     async with async_session() as session:
+        
         # Изменяем запрос, чтобы выбирать только задания с category_id = 1
         result = await session.execute(select(Task).where(Task.category_id == 1))
         tasks = result.scalars().all()
@@ -95,39 +96,50 @@ async def show_tasks(message: types.Message):
 
     await message.answer("Выберите задание:", reply_markup=builder.as_markup())
 
+    if not task:
+        await message.answer('На данный момент заданий нет')
+        return
+
 @router.message(F.text == 'Еженедельные задание')
 async def show_tasks(message: types.Message):
     async with async_session() as session:
-        # Изменяем запрос, чтобы выбирать только задания с category_id = 1
+        
         result = await session.execute(select(Task).where(Task.category_id == 7))
         tasks = result.scalars().all()
+
+
+    if not tasks:
+        await message.answer("На данный момент нет доступных заданий.")
+        return
 
     builder = InlineKeyboardBuilder()
     for task in tasks:
         builder.button(text=f"{task.description} | {task.point}", callback_data=f"task_{task.id}")
     
-    builder.adjust(1)  # Устанавливаем по одной кнопке в ряд
+    builder.adjust(1)  
 
     await message.answer("Выберите задание:", reply_markup=builder.as_markup())
+
 
 @router.message(F.text == 'Ежемесечные задание')
 async def show_tasks(message: types.Message):
     async with async_session() as session:
-        # Изменяем запрос, чтобы выбирать только задания с category_id = 1
+        
         result = await session.execute(select(Task).where(Task.category_id == 30))
         tasks = result.scalars().all()
 
+
+    if not tasks:
+        await message.answer("На данный момент нет доступных заданий.")
+        return
+
     builder = InlineKeyboardBuilder()
-    if tasks:
-        for task in tasks:
-            builder.button(text=f"{task.description} | {task.point}", callback_data=f"task_{task.id}")
+    for task in tasks:
+        builder.button(text=f"{task.description} | {task.point}", callback_data=f"task_{task.id}")
     
-        builder.adjust(1)  # Устанавливаем по одной кнопке в ряд
+    builder.adjust(1)  
 
-        await message.answer("Выберите задание:", reply_markup=builder.as_markup())
-    else:
-        await message.answer("Задание пока нет",reply_markup=kb.main)
-
+    await message.answer("Выберите задание:", reply_markup=builder.as_markup())
 
 @router.callback_query(F.data.startswith("task_"))
 async def process_task_selection(callback_query: types.CallbackQuery):
@@ -187,3 +199,23 @@ async def show_shop(message: types.Message):
             await message.answer(response)
         else:
             await message.answer("Купить пока ничего нельзя((")
+
+@router.message(F.text == 'Магазин')
+async def show_shop(message: types.Message):
+    async with async_session() as session:
+        
+        result = await session.execute(select(Shop))
+        shops = result.scalars().all()
+
+
+    if not shops:
+        await message.answer("На данный момент нельзя ничего купить.")
+        return
+
+    builder = InlineKeyboardBuilder()
+    for shop in shops:
+        builder.button(text=f"{shop.description} | {shop.points}", callback_data=f"shop_{shop.id}")
+    
+    builder.adjust(1)  
+
+    await message.answer("Выберите задание:", reply_markup=builder.as_markup())
