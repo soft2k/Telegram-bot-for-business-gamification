@@ -43,7 +43,7 @@ class Shop(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     description: Mapped[str] = mapped_column(default='Unknown')
     category_id: Mapped[int] = mapped_column(default=0)
-    points : Mapped[str] = mapped_column(default=0)
+    points : Mapped[int] = mapped_column(default=0)
 
 class Confirm(Base):
     __tablename__ = 'confrim'
