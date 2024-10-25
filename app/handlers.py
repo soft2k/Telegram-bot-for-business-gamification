@@ -187,18 +187,6 @@ async def show_top_users(message: types.Message):
 
 #Магазин
 
-@router.message(F.text == 'Магазин')
-async def show_shop(message: types.Message):  
-    async with async_session() as session:
-        result = await session.execute(select(Shop))
-        shops = result.scalars().all()
-        if shops:
-            response = ''
-            for shop in shops:
-                response += f" № {shop.id} | {shop.description} | Очки: {shop.points}\n\n"
-            await message.answer(response)
-        else:
-            await message.answer("Купить пока ничего нельзя((")
 
 @router.message(F.text == 'Магазин')
 async def show_shop(message: types.Message):
@@ -219,3 +207,42 @@ async def show_shop(message: types.Message):
     builder.adjust(1)  
 
     await message.answer("Выберите задание:", reply_markup=builder.as_markup())
+
+
+@router.callback_query(F.data.startswith("shop_"))
+async def process_shop_purchase(callback: types.CallbackQuery):
+    shop_id = int(callback.data.split("_")[1])
+    user_id = callback.from_user.id
+
+    async with async_session() as session:
+        async with session.begin():
+            # Получаем информацию о товаре
+            shop_item = await session.execute(select(Shop).where(Shop.id == shop_id))
+            shop_item = shop_item.scalar_one_or_none()
+
+            if not shop_item:
+                await callback.answer("Товар не найден.")
+                return
+
+            # Получаем информацию о пользователе
+            user = await session.execute(select(User).where(User.tg_id == user_id))
+            user = user.scalar_one_or_none()
+
+            if not user:
+                await callback.answer("Пользователь не найден.")
+                return
+
+            # Проверяем, достаточно ли у пользователя очков
+            if user.point >= shop_item.points:
+                # Вычитаем очки у пользователя
+                user.point -= shop_item.points
+                
+                # Используем callback.message вместо отдельного аргумента message
+                await callback.message.answer(f"Вы успешно приобрели {shop_item.description}! Покажите это сообщение Админу, чтобы получить подарок!")
+                
+                # Отвечаем на callback, чтобы убрать "часики" на кнопке
+                await callback.answer()
+            else:
+                await callback.answer("У вас недостаточно очков для покупки этого товара.")
+
+        
