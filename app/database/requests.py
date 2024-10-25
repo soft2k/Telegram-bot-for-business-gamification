@@ -63,7 +63,7 @@ async def profile(tg_id):
         user_id = await session.scalar(select(User).where(User.tg_id == tg_id))
 
         if user_id:
-            user_id.level = calculate_level(user_id.point)
+            user_id.level = calculate_level(user_id.all_point)
             return{
                 'name': user_id.name,
                 'tg_id': user_id.tg_id,
@@ -160,6 +160,8 @@ async def confrim_delete_one(message:  types.Message, state: FSMContext):
                 await message.reply(f'Потверждение с таким ID: {confirm_query} не найден')
     except ValueError:
         await message.reply('Введите коректный ID')
+
+
 
 
 
