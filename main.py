@@ -7,7 +7,7 @@ from app.database.models import engine, Base
 
 import app.database.requests as rq
 
-API_TOKEN = '7302355885:AAGog8u9zfK7k0yR4v7MXcihRGijB7lLFY8'
+API_TOKEN = ''
 bot = Bot(token=API_TOKEN)
 
 
