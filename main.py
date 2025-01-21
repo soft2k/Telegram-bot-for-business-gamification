@@ -19,18 +19,18 @@ async def async_main():
 async def on_startup(dp):
     await bot.set_my_commands([
         types.BotCommand(command="start", description="Перезапустить бота"),
-        # Добавьте другие команды по необходимости
+        
     ])
 
 async def main():
     await async_main()
     
-    dp = Dispatcher()  # Создаем Dispatcher без передачи bot
+    dp = Dispatcher()  
     dp.include_router(router)
     dp.include_router(router_root)
 
     await on_startup(dp)
-    await dp.start_polling(bot)  # Передаем bot в start_polling
+    await dp.start_polling(bot) 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
